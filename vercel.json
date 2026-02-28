@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/FootwearMaker/(.*)",
+      "destination": "/$1"
+    },
+    {
+      "source": "/FootwearMaker",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -5,17 +5,17 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Sub-path where the app is served (must match Next.js rewrite source)
+  base: '/FootwearMaker/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
-  base: '/FootwearMaker/',
   },
   // Expose both VITE_ (standard) and NEXT_PUBLIC_ (copied from Pixogen) prefixes
   envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
-  // remove below after tested online with ngrok
   server: {
     host: true,
-    allowedHosts: true
-  }
+    allowedHosts: true,
+  },
 })

@@ -40,8 +40,9 @@ export async function loadModelFile(file: File): Promise<THREE.BufferGeometry> {
             let geometry: THREE.BufferGeometry | null = null
             gltf.scene.traverse((child) => {
               if (!geometry && child instanceof THREE.Mesh) {
-                geometry = child.geometry.clone()
-                geometry.applyMatrix4(child.matrixWorld)
+                const cloned = child.geometry.clone()
+                cloned.applyMatrix4(child.matrixWorld)
+                geometry = cloned
               }
             })
             if (geometry) {
