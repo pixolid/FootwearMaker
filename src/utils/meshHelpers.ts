@@ -42,6 +42,11 @@ export async function loadModelFile(file: File): Promise<THREE.BufferGeometry> {
               if (!geometry && child instanceof THREE.Mesh) {
                 const cloned = child.geometry.clone()
                 cloned.applyMatrix4(child.matrixWorld)
+                // Preserve vertex color colorSpace after clone
+                const srcColor = child.geometry.attributes.color
+                if (srcColor && cloned.attributes.color) {
+                  cloned.attributes.color.colorSpace = srcColor.colorSpace
+                }
                 geometry = cloned
               }
             })

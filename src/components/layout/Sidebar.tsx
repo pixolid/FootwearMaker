@@ -1,4 +1,4 @@
-import { X, Footprints, LogOut, ChevronLeft, ChevronRight, Box } from 'lucide-react'
+import { X, LogOut, ChevronLeft, ChevronRight, Box } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/hooks/useAuth'
 import { doSignOut } from '@/firebase/auth'
@@ -60,10 +60,11 @@ export function Sidebar({
           }`}
         >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-              <Footprints className="w-4 h-4 text-indigo-400" />
-            </div>
-            <span className="font-semibold text-sm">FootwearMaker</span>
+            <img
+              src="/FootwearMaker/pixogen_logo2.png"
+              alt="Pixogen"
+              className={`w-[200px] h-[80px] object-contain ${isDark ? 'invert' : ''}`}
+            />
           </div>
           <button
             onClick={onClose}
@@ -195,7 +196,7 @@ export function Sidebar({
             <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ml-auto shrink-0 ${
               isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
             }`}>
-              {credits} cr
+              {credits} credits
             </span>
           </div>
           <button

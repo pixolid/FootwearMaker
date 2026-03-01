@@ -170,7 +170,7 @@ export function ResultPanel({
           : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
           }`}
       >
-        Start New Project
+        Start New Shoe
       </button>
     </div>
   )

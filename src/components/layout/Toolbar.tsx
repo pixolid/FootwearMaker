@@ -12,6 +12,7 @@ import {
   Redo2,
   Camera,
   LayoutGrid,
+  Palette,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTheme } from '@/hooks/useTheme'
@@ -46,6 +47,10 @@ interface ToolbarProps {
   canRedo: boolean
   onUndo: () => void
   onRedo: () => void
+
+  // Vertex colors
+  showVertexColors: boolean
+  onToggleVertexColors: () => void
 
   // Gallery sidebar
   gallerySidebarOpen: boolean
@@ -83,6 +88,8 @@ export function Toolbar({
   canRedo,
   onUndo,
   onRedo,
+  showVertexColors,
+  onToggleVertexColors,
   gallerySidebarOpen,
   onToggleGallerySidebar,
   showActiveObjectControls,
@@ -151,6 +158,15 @@ export function Toolbar({
             isDark={isDark}
           />
         </WithBadge>
+
+        {/* Vertex colors — Palette icon */}
+        <ToolbarButton
+          icon={<Palette className="w-5 h-5" />}
+          onClick={onToggleVertexColors}
+          active={showVertexColors}
+          tooltip="Vertex colors"
+          isDark={isDark}
+        />
 
         {/* Ground plane toggle — Layers icon */}
         <ToolbarButton

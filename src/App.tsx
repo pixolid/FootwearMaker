@@ -118,6 +118,8 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
   const [showGround, setShowGround] = useState(true)
   const [showCSGResult, setShowCSGResult] = useState(false)
   const [isComputing, setIsComputing] = useState(false)
+  const [isResultWireframe, setIsResultWireframe] = useState(false)
+  const [showVertexColors, setShowVertexColors] = useState(false)
 
   // Smoothing
   const [rawResultGeometry, setRawResultGeometry] = useState<THREE.BufferGeometry | null>(null)
@@ -753,6 +755,8 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
     setIsLastWireframe(false)
     setIsShoeHidden(false)
     setIsLastHidden(false)
+    setIsResultWireframe(false)
+    setShowVertexColors(false)
     setRawResultGeometry(null)
     toolGeometryRef.current = null
     setIsSmoothing(false)
@@ -919,6 +923,8 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
         isLastHidden={isLastHidden}
         showGround={showGround}
         showCSGResult={showCSGResult}
+        isResultWireframe={isResultWireframe}
+        showVertexColors={showVertexColors}
         showFFDGrid={showFFDGrid}
         showTransformControls={currentStep === 3}
         ffdA={ffdA}
@@ -939,9 +945,10 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
         onToggleSidebar={() => setSidebarOpen((p) => !p)}
         sidebarOpen={sidebarOpen}
         activeObject={activeObject}
-        isActiveWireframe={activeObject === 'A' ? isShoeWireframe : isLastWireframe}
+        isActiveWireframe={currentStep === 4 ? isResultWireframe : activeObject === 'A' ? isShoeWireframe : isLastWireframe}
         onToggleWireframe={() => {
-          if (activeObject === 'A') setIsShoeWireframe((p) => !p)
+          if (currentStep === 4) setIsResultWireframe((p) => !p)
+          else if (activeObject === 'A') setIsShoeWireframe((p) => !p)
           else setIsLastWireframe((p) => !p)
         }}
         isActiveTransparent={activeObject === 'A' ? isShoeTransparent : isLastTransparent}
@@ -954,6 +961,8 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
           if (activeObject === 'A') setIsShoeHidden((p) => !p)
           else setIsLastHidden((p) => !p)
         }}
+        showVertexColors={showVertexColors}
+        onToggleVertexColors={() => setShowVertexColors((p) => !p)}
         showGround={showGround}
         onToggleGround={() => setShowGround((p) => !p)}
         onResetCamera={handleResetCamera}

@@ -1,4 +1,4 @@
-import { Footprints, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 
 interface WelcomePanelProps {
@@ -10,12 +10,6 @@ export function WelcomePanel({ onStart }: WelcomePanelProps) {
 
   return (
     <div className="space-y-6 text-center py-4">
-      <div className="flex justify-center">
-        <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-          <Footprints className="w-8 h-8 text-indigo-400" />
-        </div>
-      </div>
-
       <div>
         <h3 className="text-lg font-bold mb-2">Welcome to FootwearMaker</h3>
         <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -56,7 +50,7 @@ export function WelcomePanel({ onStart }: WelcomePanelProps) {
         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium
           bg-indigo-500 text-white hover:bg-indigo-600 active:scale-[0.98] transition-all"
       >
-        Start New Project
+        Start New Shoe
         <ArrowRight className="w-4 h-4" />
       </button>
     </div>

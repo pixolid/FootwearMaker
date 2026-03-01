@@ -1,4 +1,4 @@
-import { useRef, useEffect, Suspense } from 'react'
+import { useRef, useEffect, useMemo, Suspense } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -27,6 +27,8 @@ interface ViewportProps {
   isLastHidden: boolean
   showGround: boolean
   showCSGResult: boolean
+  isResultWireframe: boolean
+  showVertexColors: boolean
   showFFDGrid: boolean
   /** Only show move/rotate/scale gimbal when in the Modify step */
   showTransformControls: boolean
@@ -234,6 +236,29 @@ function CameraController({
   return null
 }
 
+// ── Wireframe overlay ────────────────────────────────────────────────────────
+/** Adds a wireframe LineSegments overlay on top of the solid mesh. */
+function WireframeOverlay({ mesh }: { mesh: THREE.Mesh }) {
+  useEffect(() => {
+    const wireGeo = new THREE.WireframeGeometry(mesh.geometry)
+    const mat = new THREE.LineBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.4,
+    })
+    const wireframe = new THREE.LineSegments(wireGeo, mat)
+    mesh.add(wireframe)
+
+    return () => {
+      mesh.remove(wireframe)
+      wireGeo.dispose()
+      mat.dispose()
+    }
+  }, [mesh])
+
+  return null
+}
+
 // ── Main Viewport ─────────────────────────────────────────────────────────────
 export function Viewport({
   shoeMesh,
@@ -251,6 +276,8 @@ export function Viewport({
   isLastHidden,
   showGround,
   showCSGResult,
+  isResultWireframe,
+  showVertexColors,
   showFFDGrid,
   showTransformControls,
   ffdA,
@@ -265,6 +292,45 @@ export function Viewport({
   orbitControlsRef,
   resetCameraTrigger,
 }: ViewportProps) {
+  // ── Imperative materials ────────────────────────────────────────────────
+  // Create materials via useMemo so vertexColors is set in the constructor,
+  // guaranteeing the shader compiles with vertex-color support.
+  const shoeHasVC = !!shoeMesh?.geometry?.attributes?.color
+  const shoeMaterial = useMemo(() => {
+    const useVC = showVertexColors && shoeHasVC
+    return new THREE.MeshPhysicalMaterial({
+      color: useVC ? 0xffffff : 0x7c8594,
+      vertexColors: useVC,
+      roughness: 0.4,
+      metalness: 0.1,
+      side: THREE.DoubleSide,
+    })
+  }, [showVertexColors, shoeHasVC])
+
+  // Update non-shader props synchronously (no recompilation needed)
+  shoeMaterial.transparent = isShoeTransparent
+  shoeMaterial.opacity = isShoeTransparent ? 0.35 : 1
+  shoeMaterial.depthWrite = !isShoeTransparent
+  shoeMaterial.wireframe = isShoeWireframe
+
+  const resultHasVC = !!resultMesh?.geometry?.attributes?.color
+  const resultMaterial = useMemo(() => {
+    const useVC = showVertexColors && resultHasVC
+    return new THREE.MeshPhysicalMaterial({
+      color: useVC ? 0xffffff : 0xe8ddc8,
+      vertexColors: useVC,
+      roughness: 0.25,
+      metalness: 0.0,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.15,
+      side: THREE.DoubleSide,
+    })
+  }, [showVertexColors, resultHasVC])
+
+  // Dispose previous materials when they change
+  useEffect(() => () => { shoeMaterial.dispose() }, [shoeMaterial])
+  useEffect(() => () => { resultMaterial.dispose() }, [resultMaterial])
+
   return (
     <Canvas
       camera={{ position: [-3, 2.5, -4], fov: 50, near: 0.01, far: 1000 }}
@@ -313,18 +379,7 @@ export function Viewport({
       {/* ── Shoe Mesh (Object A) ─────────────────────────────────────── */}
       {shoeMesh && !showCSGResult && !isShoeHidden && (
         <>
-          <primitive object={shoeMesh}>
-            <meshPhysicalMaterial
-              color="#7c8594"
-              roughness={0.4}
-              metalness={0.1}
-              transparent={isShoeTransparent}
-              opacity={isShoeTransparent ? 0.35 : 1}
-              depthWrite={!isShoeTransparent}
-              wireframe={isShoeWireframe}
-              side={THREE.DoubleSide}
-            />
-          </primitive>
+          <primitive object={shoeMesh} material={shoeMaterial} />
           {showTransformControls && !showFFDGrid && activeObject === 'A' && (
             <MeshTransformControls
               mesh={shoeMesh}
@@ -403,16 +458,10 @@ export function Viewport({
 
       {/* ── CSG Result Mesh ──────────────────────────────────────────── */}
       {resultMesh && showCSGResult && (
-        <primitive object={resultMesh}>
-          <meshPhysicalMaterial
-            color="#e8ddc8"
-            roughness={0.25}
-            metalness={0.0}
-            clearcoat={1.0}
-            clearcoatRoughness={0.15}
-            side={THREE.DoubleSide}
-          />
-        </primitive>
+        <>
+          <primitive object={resultMesh} material={resultMaterial} />
+          {isResultWireframe && <WireframeOverlay mesh={resultMesh} />}
+        </>
       )}
     </Canvas>
   )

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { doSignInWithGoogle } from '@/firebase/auth'
-import { Footprints, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 export function AuthUI() {
   const [error, setError] = useState('')
@@ -31,19 +31,21 @@ export function AuthUI() {
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950" />
 
+      {/* Top-left logo */}
+      <img
+        src="/FootwearMaker/pixogen_logo2.png"
+        alt="Pixogen"
+        className="absolute top-6 left-6 w-[200px] h-[80px] object-contain invert z-10"
+      />
+
       {/* Glass card */}
       <div className="relative z-10 w-full max-w-md mx-4 p-8 rounded-[2rem] bg-slate-900/80 border border-white/10 backdrop-blur-xl shadow-2xl">
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-4 mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-            <Footprints className="w-8 h-8 text-indigo-400" />
-          </div>
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-white">FootwearMaker</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Design and modify footwear in 3D
-            </p>
-          </div>
+        {/* Title */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-white">Welcome to FootwearMaker</h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Design and modify footwear in 3D
+          </p>
         </div>
 
         {/* Sign In Button */}
