@@ -28,7 +28,6 @@ interface ViewportProps {
   showGround: boolean
   showCSGResult: boolean
   isResultWireframe: boolean
-  showVertexColors: boolean
   showFFDGrid: boolean
   /** Only show move/rotate/scale gimbal when in the Modify step */
   showTransformControls: boolean
@@ -277,7 +276,6 @@ export function Viewport({
   showGround,
   showCSGResult,
   isResultWireframe,
-  showVertexColors,
   showFFDGrid,
   showTransformControls,
   ffdA,
@@ -293,19 +291,12 @@ export function Viewport({
   resetCameraTrigger,
 }: ViewportProps) {
   // ── Imperative materials ────────────────────────────────────────────────
-  // Create materials via useMemo so vertexColors is set in the constructor,
-  // guaranteeing the shader compiles with vertex-color support.
-  const shoeHasVC = !!shoeMesh?.geometry?.attributes?.color
-  const shoeMaterial = useMemo(() => {
-    const useVC = showVertexColors && shoeHasVC
-    return new THREE.MeshPhysicalMaterial({
-      color: useVC ? 0xffffff : 0x7c8594,
-      vertexColors: useVC,
-      roughness: 0.4,
-      metalness: 0.1,
-      side: THREE.DoubleSide,
-    })
-  }, [showVertexColors, shoeHasVC])
+  const shoeMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: 0x7c8594,
+    roughness: 0.4,
+    metalness: 0.1,
+    side: THREE.DoubleSide,
+  }), [])
 
   // Update non-shader props synchronously (no recompilation needed)
   shoeMaterial.transparent = isShoeTransparent
@@ -313,21 +304,16 @@ export function Viewport({
   shoeMaterial.depthWrite = !isShoeTransparent
   shoeMaterial.wireframe = isShoeWireframe
 
-  const resultHasVC = !!resultMesh?.geometry?.attributes?.color
-  const resultMaterial = useMemo(() => {
-    const useVC = showVertexColors && resultHasVC
-    return new THREE.MeshPhysicalMaterial({
-      color: useVC ? 0xffffff : 0xe8ddc8,
-      vertexColors: useVC,
-      roughness: 0.25,
-      metalness: 0.0,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.15,
-      side: THREE.DoubleSide,
-    })
-  }, [showVertexColors, resultHasVC])
+  const resultMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: 0xe8ddc8,
+    roughness: 0.25,
+    metalness: 0.0,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.15,
+    side: THREE.DoubleSide,
+  }), [])
 
-  // Dispose previous materials when they change
+  // Dispose materials on unmount
   useEffect(() => () => { shoeMaterial.dispose() }, [shoeMaterial])
   useEffect(() => () => { resultMaterial.dispose() }, [resultMaterial])
 

@@ -2,7 +2,19 @@ import * as THREE from 'three'
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 
 // ── Public API ──────────────────────────────────────────────────────────────
-
+/**
+ *  _   __  ____ ____  ____  _
+ * | |  \ \/ ___| __ )|  _ \| |
+ * | |   \  / __|  _ \| |_)   |
+ * | |___/  \__ | |_)    _ <| |___
+ * |______/\____/____/|_| \_______|
+ * __________________________________
+ * Project: FootwearMaker
+ * Author: Alex Gabriel
+ * Company: Pixolid UG
+ * Date: 2026-03-02
+ * __________________________________
+ **/
 export interface SmoothingOptions {
   /** Smoothing intensity per iteration. 0–1. Default: 0.8 */
   strength: number

@@ -33,9 +33,9 @@ export function AuthUI() {
 
       {/* Top-left logo */}
       <img
-        src="/FootwearMaker/pixogen_logo2.png"
+        src="/FootwearMaker/logo_webseite_white.png"
         alt="Pixogen"
-        className="absolute top-6 left-6 w-[200px] h-[80px] object-contain invert z-10"
+        className="absolute top-6 left-6 w-[200px] h-[80px] object-contain z-10"
       />
 
       {/* Glass card */}

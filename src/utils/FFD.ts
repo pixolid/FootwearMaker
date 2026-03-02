@@ -3,8 +3,18 @@ import type { FFDSettings } from '@/types/footwear'
 
 /**
  * Free-Form Deformation engine using Bernstein polynomials.
- * Ported from pixogen/utils/footwear/FFD.ts
- */
+ *  _   __  ____ ____  ____  _
+ * | |  \ \/ ___| __ )|  _ \| |
+ * | |   \  / __|  _ \| |_)   |
+ * | |___/  \__ | |_)    _ <| |___
+ * |______/\____/____/|_| \_______|
+ * __________________________________
+ * Project: FootwearMaker
+ * Author: Alex Gabriel
+ * Company: Pixolid UG
+ * Date: 2026-03-02
+ * __________________________________
+ **/
 export class FFD {
   private controlPoints: THREE.Vector3[][][] = []
   private originalControlPoints: THREE.Vector3[][][] | null = null

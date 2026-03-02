@@ -61,9 +61,9 @@ export function Sidebar({
         >
           <div className="flex items-center gap-3">
             <img
-              src="/FootwearMaker/pixogen_logo2.png"
+              src="/FootwearMaker/logo_webseite_white.png"
               alt="Pixogen"
-              className={`w-[200px] h-[80px] object-contain ${isDark ? 'invert' : ''}`}
+              className={`w-[200px] h-[80px] object-contain ${isDark ? '' : 'invert'}`}
             />
           </div>
           <button
@@ -161,24 +161,26 @@ export function Sidebar({
           </div>
         )}
 
-        {/* 3D Gallery button */}
-        <div
-          className={`px-4 py-3 border-t ${
-            isDark ? 'border-white/[0.06]' : 'border-slate-200'
-          }`}
-        >
-          <button
-            onClick={onOpenGallery}
-            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium transition-all ${
-              isDark
-                ? 'bg-white/5 hover:bg-white/10 text-slate-300'
-                : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
+        {/* 3D Gallery button — only in Result tab */}
+        {currentStep === 4 && (
+          <div
+            className={`px-4 py-3 border-t ${
+              isDark ? 'border-white/[0.06]' : 'border-slate-200'
             }`}
           >
-            <Box className="w-4 h-4" />
-            3D Gallery
-          </button>
-        </div>
+            <button
+              onClick={onOpenGallery}
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                isDark
+                  ? 'bg-white/5 hover:bg-white/10 text-slate-300'
+                  : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
+              }`}
+            >
+              <Box className="w-4 h-4" />
+              3D Gallery
+            </button>
+          </div>
+        )}
 
         {/* User info */}
         <div

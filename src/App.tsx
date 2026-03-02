@@ -1,3 +1,16 @@
+/**
+ *  _   __  ____ ____  ____  _
+ * | |  \ \/ ___| __ )|  _ \| |
+ * | |   \  / __|  _ \| |_)   |
+ * | |___/  \__ | |_)    _ <| |___
+ * |______/\____/____/|_| \_______|
+ * __________________________________
+ * Project: FootwearMaker
+ * Author: Alex Gabriel
+ * Company: Pixolid UG
+ * Date: 2026-03-02
+ * __________________________________
+ **/
 import { useState, useRef, useCallback, useEffect } from 'react'
 import * as THREE from 'three'
 import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg'
@@ -119,7 +132,6 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
   const [showCSGResult, setShowCSGResult] = useState(false)
   const [isComputing, setIsComputing] = useState(false)
   const [isResultWireframe, setIsResultWireframe] = useState(false)
-  const [showVertexColors, setShowVertexColors] = useState(false)
 
   // Smoothing
   const [rawResultGeometry, setRawResultGeometry] = useState<THREE.BufferGeometry | null>(null)
@@ -756,7 +768,6 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
     setIsShoeHidden(false)
     setIsLastHidden(false)
     setIsResultWireframe(false)
-    setShowVertexColors(false)
     setRawResultGeometry(null)
     toolGeometryRef.current = null
     setIsSmoothing(false)
@@ -924,7 +935,6 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
         showGround={showGround}
         showCSGResult={showCSGResult}
         isResultWireframe={isResultWireframe}
-        showVertexColors={showVertexColors}
         showFFDGrid={showFFDGrid}
         showTransformControls={currentStep === 3}
         ffdA={ffdA}
@@ -961,8 +971,6 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
           if (activeObject === 'A') setIsShoeHidden((p) => !p)
           else setIsLastHidden((p) => !p)
         }}
-        showVertexColors={showVertexColors}
-        onToggleVertexColors={() => setShowVertexColors((p) => !p)}
         showGround={showGround}
         onToggleGround={() => setShowGround((p) => !p)}
         onResetCamera={handleResetCamera}
