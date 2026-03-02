@@ -11,8 +11,7 @@
     },
     {
       "source": "/FootwearMaker",
-      "destination": "/footwearmaker",
-      "permanent": true
+      "destination": "/footwearmaker"
     }
   ]
 }
