@@ -6,7 +6,7 @@ import path from 'path'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   // Sub-path where the app is served (must match Next.js rewrite source)
-  base: '/FootwearMaker/',
+  base: '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
