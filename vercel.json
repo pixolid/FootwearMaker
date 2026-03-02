@@ -1,13 +1,6 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
-  "redirects": [
-    {
-      "source": "/FootwearMaker",
-      "destination": "/footwearmaker",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
