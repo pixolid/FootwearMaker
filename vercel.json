@@ -2,11 +2,7 @@
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/FootwearMaker/(.*)",
-      "destination": "/$1"
-    },
-    {
-      "source": "/FootwearMaker",
+      "source": "/((?!assets/).*)",
       "destination": "/index.html"
     }
   ]
