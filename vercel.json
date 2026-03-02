@@ -8,6 +8,11 @@
     {
       "source": "/FootwearMaker",
       "destination": "/index.html"
+    },
+    {
+      "source": "/FootwearMaker",
+      "destination": "/footwearmaker",
+      "permanent": true
     }
   ]
 }
