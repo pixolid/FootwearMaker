@@ -54,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       locale: 'auto',
     })
 
-    return res.status(200).json({ sessionId: session.id })
+    return res.status(200).json({ sessionId: session.id, url: session.url })
   } catch (error: unknown) {
     const err = error as { message: string; statusCode?: number }
     console.error('Checkout session creation failed:', err.message)

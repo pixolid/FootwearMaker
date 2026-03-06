@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { X, Loader2, Zap, Check } from 'lucide-react'
-import { loadStripe } from '@stripe/stripe-js'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/hooks/useAuth'
 import { CREDIT_PACKAGES } from '@/config/appCosts'
@@ -35,18 +34,9 @@ export function AddCreditsModal({ open, onClose }: AddCreditsModalProps) {
 
             if (!response.ok) throw new Error('Failed to create checkout session')
 
-            const { sessionId } = await response.json()
-            const stripe = await loadStripe(
-                import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-                ?? import.meta.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-                ?? ''
-            )
-
-            if (!stripe) throw new Error('Stripe failed to load')
-
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { error } = await (stripe as any).redirectToCheckout({ sessionId })
-            if (error) throw error
+            const { url } = await response.json()
+            if (!url) throw new Error('No checkout URL returned')
+            window.location.href = url
         } catch (err) {
             console.error('Checkout error:', err)
         } finally {
