@@ -218,8 +218,6 @@ export function Sidebar({
                 {/* Open Pixogen */}
                 <a
                   href="https://www.pixolid.de"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   onClick={() => setUserMenuOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${isDark
                     ? 'text-slate-200 hover:bg-white/10'
@@ -241,7 +239,7 @@ export function Sidebar({
                     }`}
                 >
                   <Zap className="w-4 h-4 shrink-0 text-indigo-400" />
-                  Add Credits
+                  Get Credits
                 </button>
 
                 <div className={`h-px mx-3 ${isDark ? 'bg-white/[0.06]' : 'bg-slate-100'}`} />

@@ -69,7 +69,7 @@ export function AddCreditsModal({ open, onClose }: AddCreditsModalProps) {
                 <div className={`flex items-center justify-between px-6 py-5 border-b ${isDark ? 'border-white/[0.06]' : 'border-slate-200'}`}>
                     <div>
                         <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                            Add Credits
+                            Get Credits
                         </h2>
                         <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                             Credits are shared across all Pixolid apps · Promotional codes available at checkout

@@ -300,8 +300,8 @@ export function Viewport({
 
   // Update non-shader props synchronously (no recompilation needed)
   shoeMaterial.transparent = isShoeTransparent
-  shoeMaterial.opacity = isShoeTransparent ? 0.35 : 1
-  shoeMaterial.depthWrite = !isShoeTransparent
+  shoeMaterial.opacity = isShoeTransparent ? 0.55 : 1
+  shoeMaterial.depthWrite = true
   shoeMaterial.wireframe = isShoeWireframe
 
   const resultMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
