@@ -77,13 +77,12 @@ export function ModifyPanel({
             <button
               key={obj}
               onClick={() => onActiveObjectChange(obj)}
-              className={`py-2 rounded-xl text-xs font-medium transition-all ${
-                activeObject === obj
+              className={`py-2 rounded-xl text-xs font-medium transition-all ${activeObject === obj
                   ? 'bg-indigo-500 text-white'
                   : isDark
                     ? 'bg-white/5 hover:bg-white/10 text-slate-300'
                     : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
-              }`}
+                }`}
             >
               {obj === 'A' ? 'Shoe' : 'Last'}
             </button>
@@ -98,20 +97,19 @@ export function ModifyPanel({
         </label>
         <div className="grid grid-cols-3 gap-2">
           {([
-            { mode: 'translate' as TransformMode, icon: Move, label: 'Move' },
-            { mode: 'rotate' as TransformMode, icon: RotateCw, label: 'Rotate' },
-            { mode: 'scale' as TransformMode, icon: Maximize2, label: 'Scale' },
+            { mode: 'translate' as TransformMode, icon: Move, label: '(M)ove' },
+            { mode: 'scale' as TransformMode, icon: Maximize2, label: '(S)cale' },
+            { mode: 'rotate' as TransformMode, icon: RotateCw, label: '(R)otate' },
           ] as const).map(({ mode, icon: Icon, label }) => (
             <button
               key={mode}
               onClick={() => onTransformModeChange(mode)}
-              className={`flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                transformMode === mode
+              className={`flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium transition-all ${transformMode === mode
                   ? 'bg-indigo-500 text-white'
                   : isDark
                     ? 'bg-white/5 hover:bg-white/10 text-slate-300'
                     : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
-              }`}
+                }`}
             >
               <Icon className="w-4 h-4" />
               {label}
@@ -127,26 +125,24 @@ export function ModifyPanel({
         </label>
         <button
           onClick={onToggleFFDGrid}
-          className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all mb-2 ${
-            showFFDGrid
+          className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all mb-2 ${showFFDGrid
               ? 'bg-indigo-500 text-white'
               : isDark
                 ? 'bg-white/5 hover:bg-white/10 text-slate-300'
                 : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
-          }`}
+            }`}
         >
           <Grid3x3 className="w-4 h-4" />
-          FFD Deformation
+          (F)FD Deformation
         </button>
 
         {/* Collapsible FFD Settings */}
         <button
           onClick={() => setFfdExpanded((p) => !p)}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all mb-2 ${
-            isDark
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all mb-2 ${isDark
               ? 'bg-white/5 hover:bg-white/10 text-slate-300'
               : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
-          }`}
+            }`}
         >
           <span>FFD Settings</span>
           {ffdExpanded
@@ -193,21 +189,19 @@ export function ModifyPanel({
 
             <button
               onClick={onResetFFDGrid}
-              className={`w-full py-2 rounded-xl text-xs font-medium transition-all ${
-                isDark
+              className={`w-full py-2 rounded-xl text-xs font-medium transition-all ${isDark
                   ? 'bg-white/5 hover:bg-white/10 text-slate-300'
                   : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
-              }`}
+                }`}
             >
               Reset FFD Grid ({activeObject === 'A' ? 'Shoe' : 'Last'})
             </button>
             <button
               onClick={onResetFFD}
-              className={`w-full py-2 rounded-xl text-xs font-medium transition-all ${
-                isDark
+              className={`w-full py-2 rounded-xl text-xs font-medium transition-all ${isDark
                   ? 'bg-white/5 hover:bg-white/10 text-slate-300'
                   : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
-              }`}
+                }`}
             >
               Reset All Deformation ({activeObject === 'A' ? 'Shoe' : 'Last'})
             </button>
@@ -256,9 +250,8 @@ export function ModifyPanel({
 }
 
 function quickBtnClass(isDark: boolean) {
-  return `flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] font-medium transition-all ${
-    isDark
+  return `flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] font-medium transition-all ${isDark
       ? 'bg-white/5 hover:bg-white/10 text-slate-300'
       : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
-  }`
+    }`
 }

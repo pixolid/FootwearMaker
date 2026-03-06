@@ -246,6 +246,14 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
     currentStepRef.current = currentStep
   }, [currentStep])
 
+  // Refs for toolbar keyboard shortcuts (avoid stale closures in the [] effect)
+  const onToggleWireframeRef = useRef<() => void>(() => { })
+  const onToggleTransparencyRef = useRef<() => void>(() => { })
+  const onToggleVisibilityRef = useRef<() => void>(() => { })
+  const onToggleGroundRef = useRef<() => void>(() => { })
+  const onToggleGalleryRef = useRef<() => void>(() => { })
+  const onCameraViewRef = useRef<(v: CameraView) => void>(() => { })
+
   // Clear undo stack only when going back to an earlier editing stage (steps 0-2).
   // Going forward to step 4 (Result) must NOT clear history — the user should be
   // able to preview the CSG and return to Modify with their full undo history intact.
@@ -809,6 +817,37 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
 
   // ─── Keyboard shortcuts ────────────────────────────────────────────────────
 
+  // Keep toolbar-shortcut refs in sync with the latest closures
+  useEffect(() => {
+    const step = currentStepRef.current
+    onToggleWireframeRef.current = () => {
+      if (step === 4) setIsResultWireframe((p) => !p)
+      else if (activeObject === 'A') setIsShoeWireframe((p) => !p)
+      else setIsLastWireframe((p) => !p)
+    }
+  })
+  useEffect(() => {
+    onToggleTransparencyRef.current = () => {
+      if (activeObject === 'A') setIsShoeTransparent((p) => !p)
+      else setIsLastTransparent((p) => !p)
+    }
+  })
+  useEffect(() => {
+    onToggleVisibilityRef.current = () => {
+      if (activeObject === 'A') setIsShoeHidden((p) => !p)
+      else setIsLastHidden((p) => !p)
+    }
+  })
+  useEffect(() => {
+    onToggleGroundRef.current = () => setShowGround((p) => !p)
+  })
+  useEffect(() => {
+    onToggleGalleryRef.current = () => setGallerySidebarOpen((p) => !p)
+  })
+  useEffect(() => {
+    onCameraViewRef.current = handleCameraView
+  }, [handleCameraView])
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -831,14 +870,29 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
       }
 
       switch (e.key.toLowerCase()) {
+        // Transform modes (Modify step)
         case 'm': setTransformMode('translate'); break
-        case 'r': setTransformMode('rotate'); break
         case 's': setTransformMode('scale'); break
+        case 'r': setTransformMode('rotate'); break
         case 'f': setShowFFDGrid((prev) => !prev); break
         case 'tab':
           e.preventDefault()
           setActiveObject((prev) => (prev === 'A' ? 'B' : 'A'))
           break
+        // Toolbar toggles
+        case 'w': onToggleWireframeRef.current(); break
+        case 't': onToggleTransparencyRef.current(); break
+        case 'h': onToggleVisibilityRef.current(); break
+        case 'p': onToggleGroundRef.current(); break
+        case 'g': onToggleGalleryRef.current(); break
+        // Camera views
+        case '1': onCameraViewRef.current('perspective'); break
+        case '2': onCameraViewRef.current('top'); break
+        case '3': onCameraViewRef.current('left'); break
+        case '4': onCameraViewRef.current('front'); break
+        case '5': onCameraViewRef.current('back'); break
+        case '6': onCameraViewRef.current('bottom'); break
+        case '7': onCameraViewRef.current('right'); break
       }
     }
     window.addEventListener('keydown', handleKeyDown)

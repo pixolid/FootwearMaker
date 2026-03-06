@@ -56,13 +56,13 @@ interface ToolbarProps {
 }
 
 const CAMERA_VIEWS: { label: string; view: CameraView }[] = [
-  { label: 'Perspective', view: 'perspective' },
-  { label: 'Top', view: 'top' },
-  { label: 'Bottom', view: 'bottom' },
-  { label: 'Front', view: 'front' },
-  { label: 'Back', view: 'back' },
-  { label: 'Left', view: 'left' },
-  { label: 'Right', view: 'right' },
+  { label: 'Perspective (1)', view: 'perspective' },
+  { label: 'Top (2)', view: 'top' },
+  { label: 'Left (3)', view: 'left' },
+  { label: 'Front (4)', view: 'front' },
+  { label: 'Back (5)', view: 'back' },
+  { label: 'Bottom (6)', view: 'bottom' },
+  { label: 'Right (7)', view: 'right' },
 ]
 
 export function Toolbar({
@@ -112,7 +112,7 @@ export function Toolbar({
           icon={<LayoutGrid className="w-5 h-5" />}
           onClick={onToggleGallerySidebar}
           active={gallerySidebarOpen}
-          tooltip="3D Gallery"
+          tooltip="(G)allery"
           isDark={isDark}
         />
       </PillGroup>
@@ -125,7 +125,7 @@ export function Toolbar({
             icon={<BoxSelect className="w-5 h-5" />}
             onClick={onToggleWireframe}
             active={isActiveWireframe}
-            tooltip={`Wireframe${showActiveObjectControls ? ` (${activeObject === 'A' ? 'Shoe' : 'Last'})` : ''}`}
+            tooltip={`(W)ireframe${showActiveObjectControls ? ` (${activeObject === 'A' ? 'Shoe' : 'Last'})` : ''}`}
             isDark={isDark}
           />
         </WithBadge>
@@ -136,7 +136,7 @@ export function Toolbar({
             icon={<Ghost className="w-5 h-5" />}
             onClick={onToggleTransparency}
             active={isActiveTransparent}
-            tooltip={`Transparent${showActiveObjectControls ? ` (${activeObject === 'A' ? 'Shoe' : 'Last'})` : ''}`}
+            tooltip={`(T)ransparent${showActiveObjectControls ? ` (${activeObject === 'A' ? 'Shoe' : 'Last'})` : ''}`}
             isDark={isDark}
           />
         </WithBadge>
@@ -147,7 +147,7 @@ export function Toolbar({
             icon={isActiveHidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             onClick={onToggleVisibility}
             active={isActiveHidden}
-            tooltip={`${isActiveHidden ? 'Show' : 'Hide'}${showActiveObjectControls ? ` (${activeObject === 'A' ? 'Shoe' : 'Last'})` : ''}`}
+            tooltip={`(H)ide${showActiveObjectControls ? ` (${activeObject === 'A' ? 'Shoe' : 'Last'})` : ''}`}
             isDark={isDark}
           />
         </WithBadge>
@@ -157,7 +157,7 @@ export function Toolbar({
           icon={<Layers className="w-5 h-5" />}
           onClick={onToggleGround}
           active={showGround}
-          tooltip={showGround ? 'Hide ground' : 'Show ground'}
+          tooltip="(P)lane"
           isDark={isDark}
         />
 
@@ -180,11 +180,10 @@ export function Toolbar({
           />
           {showCameraMenu && (
             <div
-              className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-3 py-2 rounded-xl backdrop-blur-xl shadow-2xl min-w-[140px] ${
-                isDark
+              className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-3 py-2 rounded-xl backdrop-blur-xl shadow-2xl min-w-[140px] ${isDark
                   ? 'bg-slate-900/95'
                   : 'bg-slate-50/95'
-              }`}
+                }`}
             >
               {CAMERA_VIEWS.map(({ label, view }) => (
                 <button
@@ -193,11 +192,10 @@ export function Toolbar({
                     onCameraView(view)
                     setShowCameraMenu(false)
                   }}
-                  className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                    isDark
+                  className={`w-full px-4 py-2 text-left text-sm transition-colors ${isDark
                       ? 'hover:bg-white/10 text-slate-200'
                       : 'hover:bg-slate-100 text-slate-700'
-                  }`}
+                    }`}
                 >
                   {label}
                 </button>
@@ -233,9 +231,8 @@ export function Toolbar({
 function PillGroup({ isDark, children }: { isDark: boolean; children: React.ReactNode }) {
   return (
     <div
-      className={`flex items-center gap-2 p-2 rounded-2xl backdrop-blur-xl shadow-2xl ${
-        isDark ? 'bg-slate-900/95' : 'bg-slate-50/95'
-      }`}
+      className={`flex items-center gap-2 p-2 rounded-2xl backdrop-blur-xl shadow-2xl ${isDark ? 'bg-slate-900/95' : 'bg-slate-50/95'
+        }`}
     >
       {children}
     </div>

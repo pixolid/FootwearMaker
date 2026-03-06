@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import type * as THREE from 'three'
-import { Save, Loader2, Sparkles } from 'lucide-react'
+import { Save, Loader2, Sparkles, ChevronDown, ChevronRight } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 
 interface ResultPanelProps {
@@ -34,6 +35,7 @@ export function ResultPanel({
   onSmoothStrengthChange,
 }: ResultPanelProps) {
   const { isDark } = useTheme()
+  const [smoothingExpanded, setSmoothingExpanded] = useState(false)
 
   const sliderClass = `w-full h-1.5 rounded-full appearance-none cursor-pointer
     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5
@@ -66,48 +68,6 @@ export function ResultPanel({
             Collar Smoothing
           </label>
 
-          {/* Radius slider */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                Radius
-              </span>
-              <span className={`text-xs tabular-nums ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                {smoothRadius.toFixed(2)}
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0.2}
-              max={1.0}
-              step={0.05}
-              value={smoothRadius}
-              onChange={(e) => onSmoothRadiusChange(parseFloat(e.target.value))}
-              className={sliderClass}
-            />
-          </div>
-
-          {/* Strength slider */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                Strength
-              </span>
-              <span className={`text-xs tabular-nums ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                {smoothStrength.toFixed(1)}
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0.1}
-              max={1.0}
-              step={0.1}
-              value={smoothStrength}
-              onChange={(e) => onSmoothStrengthChange(parseFloat(e.target.value))}
-              className={sliderClass}
-            />
-          </div>
-
           {/* Apply button */}
           <button
             onClick={onApplySmoothing}
@@ -132,6 +92,67 @@ export function ResultPanel({
               </>
             )}
           </button>
+
+          {/* Collapsible Smoothing Settings */}
+          <button
+            onClick={() => setSmoothingExpanded((p) => !p)}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${isDark
+                ? 'bg-white/5 hover:bg-white/10 text-slate-300'
+                : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
+              }`}
+          >
+            <span>Smoothing Settings</span>
+            {smoothingExpanded
+              ? <ChevronDown className="w-3.5 h-3.5" />
+              : <ChevronRight className="w-3.5 h-3.5" />
+            }
+          </button>
+
+          {smoothingExpanded && (
+            <div className="space-y-3">
+              {/* Radius slider */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Radius
+                  </span>
+                  <span className={`text-xs tabular-nums ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                    {smoothRadius.toFixed(2)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0.2}
+                  max={1.0}
+                  step={0.05}
+                  value={smoothRadius}
+                  onChange={(e) => onSmoothRadiusChange(parseFloat(e.target.value))}
+                  className={sliderClass}
+                />
+              </div>
+
+              {/* Strength slider */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Strength
+                  </span>
+                  <span className={`text-xs tabular-nums ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                    {smoothStrength.toFixed(1)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0.1}
+                  max={1.0}
+                  step={0.1}
+                  value={smoothStrength}
+                  onChange={(e) => onSmoothStrengthChange(parseFloat(e.target.value))}
+                  className={sliderClass}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
