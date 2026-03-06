@@ -293,15 +293,18 @@ export function Viewport({
   // ── Imperative materials ────────────────────────────────────────────────
   const shoeMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
     color: 0x7c8594,
-    roughness: 0.4,
-    metalness: 0.1,
+    roughness: 0.35,
+    metalness: 0.05,
+    clearcoat: 0.6,
+    clearcoatRoughness: 0.2,
     side: THREE.DoubleSide,
   }), [])
 
   // Update non-shader props synchronously (no recompilation needed)
   shoeMaterial.transparent = isShoeTransparent
-  shoeMaterial.opacity = isShoeTransparent ? 0.55 : 1
+  shoeMaterial.opacity = isShoeTransparent ? 0.7 : 1
   shoeMaterial.depthWrite = true
+  shoeMaterial.side = isShoeTransparent ? THREE.FrontSide : THREE.DoubleSide
   shoeMaterial.wireframe = isShoeWireframe
 
   const resultMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
@@ -365,7 +368,7 @@ export function Viewport({
       {/* ── Shoe Mesh (Object A) ─────────────────────────────────────── */}
       {shoeMesh && !showCSGResult && !isShoeHidden && (
         <>
-          <primitive object={shoeMesh} material={shoeMaterial} />
+          <primitive object={shoeMesh} material={shoeMaterial} renderOrder={isShoeWireframe ? 2 : 0} />
           {showTransformControls && !showFFDGrid && activeObject === 'A' && (
             <MeshTransformControls
               mesh={shoeMesh}
@@ -407,9 +410,9 @@ export function Viewport({
               color="#c4930a"
               roughness={0.55}
               metalness={0.05}
-              transparent={true}
-              opacity={isLastTransparent ? 0.35 : isShoeTransparent ? 1.0 : 0.6}
-              depthWrite={false}
+              transparent={isLastTransparent}
+              opacity={isLastTransparent ? 0.35 : 1.0}
+              depthWrite={true}
               wireframe={isLastWireframe}
               side={THREE.DoubleSide}
             />
