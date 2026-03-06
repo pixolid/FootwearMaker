@@ -21,8 +21,7 @@ export function AddCreditsModal({ open, onClose }: AddCreditsModalProps) {
         if (!user) return
         setLoadingId(packageId)
         try {
-            const apiBase = import.meta.env.VITE_API_BASE_URL ?? ''
-            const response = await fetch(`${apiBase}/api/create-checkout-session`, {
+            const response = await fetch(`${import.meta.env.BASE_URL}api/create-checkout-session`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
