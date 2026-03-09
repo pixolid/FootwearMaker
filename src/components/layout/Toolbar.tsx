@@ -12,9 +12,14 @@ import {
   Redo2,
   Camera,
   LayoutGrid,
+  Save,
+  BookMarked,
+  Loader2,
+  Thermometer,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTheme } from '@/hooks/useTheme'
+import { ProBadge } from '@/components/ui/ProBadge'
 import type { ActiveObject, CameraView } from '@/types/footwear'
 
 interface ToolbarProps {
@@ -51,8 +56,25 @@ interface ToolbarProps {
   gallerySidebarOpen: boolean
   onToggleGallerySidebar: () => void
 
+  // Saved states sidebar
+  savedStatesSidebarOpen: boolean
+  onToggleSavedStatesSidebar: () => void
+  onSaveState: () => void
+  /** Whether a state save is currently in progress */
+  isSavingState: boolean
+
   /** Only show active-object badges when in the Modify step */
   showActiveObjectControls: boolean
+
+  /** Whether the current user has Pro access */
+  isPro: boolean
+
+  // Thickness heatmap
+  isThicknessHeatmapActive: boolean
+  onToggleHeatmap: () => void
+  isComputingHeatmap: boolean
+  /** Only render the heatmap button when in Modify step with both meshes loaded */
+  canShowHeatmap: boolean
 }
 
 const CAMERA_VIEWS: { label: string; view: CameraView }[] = [
@@ -85,7 +107,16 @@ export function Toolbar({
   onRedo,
   gallerySidebarOpen,
   onToggleGallerySidebar,
+  savedStatesSidebarOpen,
+  onToggleSavedStatesSidebar,
+  onSaveState,
+  isSavingState,
   showActiveObjectControls,
+  isPro,
+  isThicknessHeatmapActive,
+  onToggleHeatmap,
+  isComputingHeatmap,
+  canShowHeatmap,
 }: ToolbarProps) {
   const { isDark, toggleTheme } = useTheme()
   const [showCameraMenu, setShowCameraMenu] = useState(false)
@@ -115,6 +146,26 @@ export function Toolbar({
           tooltip="(G)allery"
           isDark={isDark}
         />
+        <div className="relative">
+          <ToolbarButton
+            icon={isSavingState ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            onClick={onSaveState}
+            disabled={isSavingState}
+            tooltip="Save State"
+            isDark={isDark}
+          />
+          {!isPro && <ProBadge size="xs" />}
+        </div>
+        <div className="relative">
+          <ToolbarButton
+            icon={<BookMarked className="w-5 h-5" />}
+            onClick={onToggleSavedStatesSidebar}
+            active={savedStatesSidebarOpen}
+            tooltip="Saved States"
+            isDark={isDark}
+          />
+          {!isPro && <ProBadge size="xs" />}
+        </div>
       </PillGroup>
 
       {/* Object display controls — wireframe, transparency, hide */}
@@ -161,6 +212,20 @@ export function Toolbar({
           isDark={isDark}
         />
 
+        {/* Thickness Heatmap — only in Modify step with both meshes loaded */}
+        {canShowHeatmap && (
+          <ToolbarButton
+            icon={isComputingHeatmap
+              ? <Loader2 className="w-5 h-5 animate-spin" />
+              : <Thermometer className="w-5 h-5" />}
+            onClick={onToggleHeatmap}
+            active={isThicknessHeatmapActive}
+            disabled={isComputingHeatmap}
+            tooltip="Thickness Heatmap"
+            isDark={isDark}
+          />
+        )}
+
         {/* Reset camera */}
         <ToolbarButton
           icon={<RotateCcw className="w-5 h-5" />}
@@ -181,8 +246,8 @@ export function Toolbar({
           {showCameraMenu && (
             <div
               className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-3 py-2 rounded-xl backdrop-blur-xl shadow-2xl min-w-[140px] ${isDark
-                  ? 'bg-slate-900/95'
-                  : 'bg-slate-50/95'
+                ? 'bg-slate-900/95'
+                : 'bg-slate-50/95'
                 }`}
             >
               {CAMERA_VIEWS.map(({ label, view }) => (
@@ -193,8 +258,8 @@ export function Toolbar({
                     setShowCameraMenu(false)
                   }}
                   className={`w-full px-4 py-2 text-left text-sm transition-colors ${isDark
-                      ? 'hover:bg-white/10 text-slate-200'
-                      : 'hover:bg-slate-100 text-slate-700'
+                    ? 'hover:bg-white/10 text-slate-200'
+                    : 'hover:bg-slate-100 text-slate-700'
                     }`}
                 >
                   {label}

@@ -9,6 +9,7 @@ interface MeshTransformControlsProps {
   enabled: boolean
   onTransform: (matrix: THREE.Matrix4) => void
   onDragStart?: () => void
+  onDragEnd?: () => void
   space: 'world' | 'local'
   size: number
   orbitControlsRef: React.RefObject<any>
@@ -20,6 +21,7 @@ export default function MeshTransformControls({
   enabled,
   onTransform,
   onDragStart,
+  onDragEnd,
   space,
   size,
   orbitControlsRef,
@@ -54,6 +56,7 @@ export default function MeshTransformControls({
           mesh.updateMatrixWorld(true)
           const finalMatrix = mesh.matrix.clone()
           onTransform(finalMatrix)
+          if (onDragEnd) onDragEnd()
         }
       }
 
@@ -63,12 +66,13 @@ export default function MeshTransformControls({
       return () => {
         controls.removeEventListener('change', handleChange)
         controls.removeEventListener('dragging-changed', handleDraggingChanged)
+
         if (orbitControlsRef?.current) {
           orbitControlsRef.current.enabled = true
         }
       }
     }
-  }, [mesh, onTransform, onDragStart, orbitControlsRef])
+  }, [mesh, onTransform, onDragStart, onDragEnd, orbitControlsRef])
 
   if (!mesh || !enabled) return null
 

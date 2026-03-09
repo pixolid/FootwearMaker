@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { X, LogOut, ChevronLeft, ChevronRight, Box, ExternalLink, Zap, ChevronDown } from 'lucide-react'
+import { X, LogOut, ChevronLeft, ChevronRight, Box, ExternalLink, Zap, ChevronDown, BookMarked } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/hooks/useAuth'
 import { doSignOut } from '@/firebase/auth'
 import { AddCreditsModal } from '@/components/modals/AddCreditsModal'
+import { ProBadge } from '@/components/ui/ProBadge'
 import type { ReactNode } from 'react'
 
 interface SidebarProps {
@@ -17,6 +18,9 @@ interface SidebarProps {
   canGoPrev: boolean
   credits: number
   onOpenGallery: () => void
+  onOpenSavedStates: () => void
+  /** Whether the current user has Pro access */
+  isPro: boolean
 }
 
 const STEPS = [
@@ -37,6 +41,8 @@ export function Sidebar({
   canGoPrev,
   credits,
   onOpenGallery,
+  onOpenSavedStates,
+  isPro,
 }: SidebarProps) {
   const { isDark } = useTheme()
   const { user } = useAuth()
@@ -157,21 +163,36 @@ export function Sidebar({
           </div>
         )}
 
-        {/* 3D Gallery button — only in Result tab */}
-        {currentStep === 4 && (
+        {/* 3D Gallery + Saved States buttons */}
+        {(currentStep >= 3) && (
           <div
-            className={`px-4 py-3 border-t ${isDark ? 'border-white/[0.06]' : 'border-slate-200'
+            className={`px-4 py-3 border-t flex gap-2 ${isDark ? 'border-white/[0.06]' : 'border-slate-200'
               }`}
           >
+            {/* 3D Gallery — only in Result tab (step 4) */}
+            {currentStep === 4 && (
+              <button
+                onClick={onOpenGallery}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium transition-all ${isDark
+                  ? 'bg-white/5 hover:bg-white/10 text-slate-300'
+                  : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
+                  }`}
+              >
+                <Box className="w-4 h-4" />
+                3D Gallery
+              </button>
+            )}
+            {/* Saved States — visible from step 3 (Modify) onwards */}
             <button
-              onClick={onOpenGallery}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium transition-all ${isDark
+              onClick={onOpenSavedStates}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium transition-all ${isDark
                 ? 'bg-white/5 hover:bg-white/10 text-slate-300'
                 : 'bg-slate-200 hover:bg-slate-100 text-slate-600'
                 }`}
             >
-              <Box className="w-4 h-4" />
-              3D Gallery
+              <BookMarked className="w-4 h-4" />
+              Saved States
+              {!isPro && <ProBadge size="sm" />}
             </button>
           </div>
         )}

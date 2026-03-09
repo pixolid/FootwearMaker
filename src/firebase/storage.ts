@@ -8,6 +8,7 @@ import {
 } from 'firebase/storage'
 import { doc, getDoc, setDoc, runTransaction } from 'firebase/firestore'
 import { storage, db } from './config'
+import type { SavedStateMetadata } from '@/utils/stateSerializer'
 
 // Upload a file to Firebase Storage
 export async function uploadFile(
@@ -249,5 +250,144 @@ export async function updateUserCredits(
   } catch (error) {
     console.error('Error updating user credits:', error)
     return false
+  }
+}
+// ─── Saved States ─────────────────────────────────────────────────────────────
+// Storage layout: users/{userId}/saved-states/{stateId}/
+//   metadata.json, shoe.glb (optional), last.glb (optional), thumbnail.png
+
+export interface SavedStateEntry {
+  id: string
+  metadata: SavedStateMetadata
+  thumbnailUrl: string | null
+}
+
+/** Upload a complete project state (metadata + optional GLB blobs + thumbnail) */
+export async function uploadSavedState(
+  userId: string,
+  stateId: string,
+  metadata: SavedStateMetadata,
+  shoeGlb: ArrayBuffer | null,
+  lastGlb: ArrayBuffer | null,
+  thumbnailBlob: Blob | null,
+): Promise<void> {
+  const base = `users/${userId}/saved-states/${stateId}`
+
+  // Upload metadata.json
+  const metaJson = JSON.stringify(metadata)
+  const metaBlob = new Blob([metaJson], { type: 'application/json' })
+  await uploadBytes(ref(storage, `${base}/metadata.json`), metaBlob)
+
+  // Upload shoe GLB (if present)
+  if (shoeGlb) {
+    await uploadBytes(
+      ref(storage, `${base}/shoe.glb`),
+      new Blob([shoeGlb], { type: 'model/gltf-binary' }),
+    )
+  }
+
+  // Upload last GLB (if present)
+  if (lastGlb) {
+    await uploadBytes(
+      ref(storage, `${base}/last.glb`),
+      new Blob([lastGlb], { type: 'model/gltf-binary' }),
+    )
+  }
+
+  // Upload thumbnail (if present)
+  if (thumbnailBlob) {
+    await uploadBytes(ref(storage, `${base}/thumbnail.png`), thumbnailBlob)
+  }
+}
+
+/** List all saved states for a user, sorted newest first */
+export async function getSavedStates(userId: string): Promise<SavedStateEntry[]> {
+  const base = `users/${userId}/saved-states`
+  try {
+    const listRef = ref(storage, base)
+    const result = await listAll(listRef)
+
+    // Each "prefix" is a stateId folder
+    const entries = await Promise.all(
+      result.prefixes.map(async (folderRef) => {
+        const stateId = folderRef.name
+        try {
+          // Download metadata.json
+          const metaRef = ref(storage, `${base}/${stateId}/metadata.json`)
+          const metaUrl = await getDownloadURL(metaRef)
+          const res = await fetch(metaUrl)
+          const metadata: SavedStateMetadata = await res.json()
+
+          // Try to get thumbnail URL
+          let thumbnailUrl: string | null = null
+          try {
+            thumbnailUrl = await getDownloadURL(
+              ref(storage, `${base}/${stateId}/thumbnail.png`),
+            )
+          } catch {
+            // thumbnail is optional
+          }
+
+          return { id: stateId, metadata, thumbnailUrl } as SavedStateEntry
+        } catch {
+          return null
+        }
+      }),
+    )
+
+    return (entries.filter(Boolean) as SavedStateEntry[])
+      .sort((a, b) => b.metadata.savedAt - a.metadata.savedAt)
+  } catch {
+    return []
+  }
+}
+
+/** Download a state's metadata + GLB binaries */
+export async function downloadSavedState(
+  userId: string,
+  stateId: string,
+): Promise<{ metadata: SavedStateMetadata; shoeGlb: ArrayBuffer | null; lastGlb: ArrayBuffer | null }> {
+  const base = `users/${userId}/saved-states/${stateId}`
+
+  // Download metadata
+  const metaUrl = await getDownloadURL(ref(storage, `${base}/metadata.json`))
+  const metadata: SavedStateMetadata = await (await fetch(metaUrl)).json()
+
+  // Download shoe GLB if it exists
+  let shoeGlb: ArrayBuffer | null = null
+  if (metadata.hasShoe) {
+    try {
+      const url = await getDownloadURL(ref(storage, `${base}/shoe.glb`))
+      shoeGlb = await (await fetch(url)).arrayBuffer()
+    } catch {
+      console.warn('shoe.glb not found for state', stateId)
+    }
+  }
+
+  // Download last GLB if it exists
+  let lastGlb: ArrayBuffer | null = null
+  if (metadata.hasLast) {
+    try {
+      const url = await getDownloadURL(ref(storage, `${base}/last.glb`))
+      lastGlb = await (await fetch(url)).arrayBuffer()
+    } catch {
+      console.warn('last.glb not found for state', stateId)
+    }
+  }
+
+  return { metadata, shoeGlb, lastGlb }
+}
+
+/** Delete an entire saved state folder (all files within it) */
+export async function deleteSavedState(userId: string, stateId: string): Promise<void> {
+  const base = `users/${userId}/saved-states/${stateId}`
+  const folderRef = ref(storage, base)
+
+  try {
+    const result = await listAll(folderRef)
+    await Promise.all(result.items.map((item) => deleteObject(item)))
+  } catch (error) {
+    console.error('Failed to delete saved state', stateId, error)
+    throw error
   }
 }

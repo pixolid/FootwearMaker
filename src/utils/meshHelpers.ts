@@ -243,6 +243,21 @@ export async function exportToOBJ(mesh: THREE.Mesh, filename: string = 'result.o
   downloadBlob(new Blob([result], { type: 'text/plain' }), filename)
 }
 
+/**
+ * Auto-detect mm-per-scene-unit from the pre-normalization bounding box max dim.
+ * After standardizeMesh, all geometries are ~5 units. This reverses that to get mm.
+ *
+ * Heuristic (valid for all real-world footwear):
+ *   > 100  → file units are mm  (e.g. 270 mm shoe  → sceneUnitToMM = 270/5 = 54)
+ *   10–100 → file units are cm  (e.g. 27 cm shoe   → sceneUnitToMM = 27×10/5 = 54)
+ *   < 10   → file units are m   (e.g. 0.27 m shoe  → sceneUnitToMM = 0.27×1000/5 = 54)
+ */
+export function estimateSceneUnitToMM(originalMaxDim: number): number {
+  if (originalMaxDim > 100) return originalMaxDim / 5         // assumed mm
+  if (originalMaxDim > 10)  return (originalMaxDim * 10) / 5  // assumed cm
+  return (originalMaxDim * 1000) / 5                          // assumed m
+}
+
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

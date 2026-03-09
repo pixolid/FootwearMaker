@@ -24,4 +24,6 @@ dist-ssr
 *.sln
 *.sw?
 
+thickness-heatmap-plan.md
+SAVE_LOAD_PLAN.md
 PORTING_PLAN.md

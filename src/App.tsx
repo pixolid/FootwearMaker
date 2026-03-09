@@ -19,6 +19,9 @@ import { AuthUI } from '@/components/auth/AuthUI'
 import { Toolbar } from '@/components/layout/Toolbar'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { GallerySidebar } from '@/components/layout/GallerySidebar'
+import { SavedStatesSidebar } from '@/components/layout/SavedStatesSidebar'
+import { SaveNameModal } from '@/components/modals/SaveNameModal'
+import { ProFeatureModal } from '@/components/modals/ProFeatureModal'
 import { Viewport } from '@/components/viewport/Viewport'
 import { ToastContainer } from '@/components/ui/Toast'
 import { LibraryModal } from '@/components/modals/LibraryModal'
@@ -28,6 +31,7 @@ import { LastPanel } from '@/components/panels/LastPanel'
 import { ModifyPanel } from '@/components/panels/ModifyPanel'
 import { ResultPanel } from '@/components/panels/ResultPanel'
 import { useAuth } from '@/hooks/useAuth'
+import { useSubscription } from '@/hooks/useSubscription'
 import { useToast } from '@/hooks/useToast'
 import { useUndoStack } from '@/hooks/useUndoStack'
 import type { MeshSnapshot, UndoSnapshot } from '@/hooks/useUndoStack'
@@ -40,8 +44,11 @@ import {
   exportToGLB,
   exportToSTL,
   exportToOBJ,
+  estimateSceneUnitToMM,
 } from '@/utils/meshHelpers'
-import { uploadFile, getUserCredits, updateUserCredits } from '@/firebase/storage'
+import { computeThicknessColors } from '@/utils/thicknessAnalyzer'
+import { uploadFile, getUserCredits, updateUserCredits, uploadSavedState, getSavedStates, downloadSavedState, deleteSavedState } from '@/firebase/storage'
+import { serializeState, deserializeState } from '@/utils/stateSerializer'
 import { generateFilename } from '@/utils/filename'
 import { smoothSeam } from '@/utils/seamSmoothing'
 import { APP_COSTS } from '@/config/appCosts'
@@ -81,6 +88,7 @@ interface FootwearMakerProps {
 
 function FootwearMaker({ userId }: FootwearMakerProps) {
   const { toasts, toast, dismiss } = useToast()
+  const { isPro } = useSubscription()
 
   // Workflow state
   const [currentStep, setCurrentStep] = useState(0)
@@ -89,6 +97,22 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [gallerySidebarOpen, setGallerySidebarOpen] = useState(false)
   const [galleryRefreshTrigger, setGalleryRefreshTrigger] = useState(0)
+  const [savedStatesSidebarOpen, setSavedStatesSidebarOpen] = useState(false)
+  const [savedStatesRefreshTrigger, setSavedStatesRefreshTrigger] = useState(0)
+  const [isSavingState, setIsSavingState] = useState(false)
+  const [saveNameModalOpen, setSaveNameModalOpen] = useState(false)
+
+  // Pro feature modal
+  const [proModalOpen, setProModalOpen] = useState(false)
+  const [proModalFeature, setProModalFeature] = useState('')
+
+  /** Returns true if the user has Pro access; otherwise shows the Pro Feature Modal */
+  const requirePro = useCallback((featureName: string): boolean => {
+    if (isPro) return true
+    setProModalFeature(featureName)
+    setProModalOpen(true)
+    return false
+  }, [isPro])
 
   // Library modal state
   const [libraryModal, setLibraryModal] = useState<'shoe' | 'last' | null>(null)
@@ -143,6 +167,12 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
 
   // Credits
   const [credits, setCredits] = useState(0)
+
+  // Thickness heatmap
+  const [sceneUnitToMM, setSceneUnitToMM] = useState(50) // default ~250 mm shoe / 5 units
+  const [isThicknessHeatmapActive, setIsThicknessHeatmapActive] = useState(false)
+  const [thicknessColors, setThicknessColors] = useState<Float32Array | null>(null)
+  const [isComputingHeatmap, setIsComputingHeatmap] = useState(false)
 
   // Refs
   const cameraViewRef = useRef<CameraView>('perspective')
@@ -294,8 +324,21 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
 
   // ─── Shoe loading ──────────────────────────────────────────────────────────
 
+  /** Reset heatmap whenever any mesh or transform changes */
+  const invalidateHeatmap = useCallback(() => {
+    setIsThicknessHeatmapActive(false)
+    setThicknessColors(null)
+  }, [])
+
   const loadShoeGeometry = useCallback(
     async (geo: THREE.BufferGeometry, name: string) => {
+      // Capture original scale BEFORE standardizeMesh discards it
+      geo.computeBoundingBox()
+      const origSize = geo.boundingBox!.getSize(new THREE.Vector3())
+      const origMaxDim = Math.max(origSize.x, origSize.y, origSize.z)
+      setSceneUnitToMM(estimateSceneUnitToMM(origMaxDim))
+      invalidateHeatmap()
+
       const standardized = standardizeMesh(geo)
       const mesh = new THREE.Mesh(standardized)
       setShoeMesh(mesh)
@@ -304,7 +347,7 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
       toast({ title: 'Shoe loaded', type: 'success' })
       goToStep(2) // advance to Last step
     },
-    [ffdSettingsA, toast, goToStep],
+    [ffdSettingsA, toast, goToStep, invalidateHeatmap],
   )
 
   const handleShoeFileChange = useCallback(
@@ -344,10 +387,11 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
       setLastMesh(mesh)
       setLastFile(name as any)
       setFfdB(new FFD(standardized, ffdSettingsB))
+      invalidateHeatmap()
       toast({ title: 'Last loaded', type: 'success' })
       goToStep(3) // advance to Modify step
     },
-    [ffdSettingsB, shoeMesh, toast, goToStep],
+    [ffdSettingsB, shoeMesh, toast, goToStep, invalidateHeatmap],
   )
 
   const handleLastFileChange = useCallback(
@@ -401,10 +445,11 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
           const deformed = ffdA.getDeformedGeometry()
           shoeMesh.geometry.dispose()
           shoeMesh.geometry = deformed
+          invalidateHeatmap()
         }
       }
     },
-    [ffdA, shoeMesh],
+    [ffdA, shoeMesh, invalidateHeatmap],
   )
 
   const handleFFDPointMoveB = useCallback(
@@ -415,10 +460,11 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
           const deformed = ffdB.getDeformedGeometry()
           lastMesh.geometry.dispose()
           lastMesh.geometry = deformed
+          invalidateHeatmap()
         }
       }
     },
-    [ffdB, lastMesh],
+    [ffdB, lastMesh, invalidateHeatmap],
   )
 
   // ─── CSG ──────────────────────────────────────────────────────────────────
@@ -632,6 +678,98 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
     }
   }, [resultMesh, userId, credits, toast])
 
+  // ─── Save / Load project state ──────────────────────────────────────────────
+
+  const handleSaveState = useCallback(async (stateName: string) => {
+    if (!shoeMesh && !lastMesh) {
+      toast({ title: 'Nothing to save — load at least one model first', type: 'error' })
+      return
+    }
+    setIsSavingState(true)
+    try {
+      const stateId = `state-${Date.now()}`
+
+      // Capture thumbnail from canvas
+      const canvas = document.querySelector('canvas')
+      let thumbnailBlob: Blob | null = null
+      if (canvas) {
+        // Wait two frames for R3F to finish rendering before capturing
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+        thumbnailBlob = await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob((b) => resolve(b), 'image/png', 0.85)
+        })
+      }
+
+      // Serialize all state
+      const { metadata, shoeGlb, lastGlb } = await serializeState({
+        shoeMesh,
+        lastMesh,
+        ffdA,
+        ffdB,
+        ffdSettingsA,
+        ffdSettingsB,
+        shoeFileName: shoeFile,
+        lastFileName: lastFile,
+        currentStep,
+        stateName,
+        stateId,
+      })
+
+      await uploadSavedState(userId, stateId, metadata, shoeGlb, lastGlb, thumbnailBlob)
+      setSavedStatesRefreshTrigger((n) => n + 1)
+      toast({ title: `"${stateName}" saved`, type: 'success' })
+    } catch (err) {
+      console.error('Save state failed:', err)
+      toast({ title: 'Failed to save state', type: 'error' })
+    } finally {
+      setIsSavingState(false)
+    }
+  }, [shoeMesh, lastMesh, ffdA, ffdB, ffdSettingsA, ffdSettingsB, shoeFile, lastFile, currentStep, userId, toast])
+
+  const handleLoadState = useCallback(async (stateId: string) => {
+    toast({ title: 'Loading state…', type: 'info' })
+    try {
+      const { metadata, shoeGlb, lastGlb } = await downloadSavedState(userId, stateId)
+      const restored = await deserializeState({ metadata, shoeGlb, lastGlb })
+
+      // Clear existing state first
+      setShoeMesh(null)
+      setLastMesh(null)
+      setFfdA(null)
+      setFfdB(null)
+      setShowCSGResult(false)
+      clearUndo()
+
+      // Apply restored state
+      setShoeMesh(restored.shoeMesh)
+      setLastMesh(restored.lastMesh)
+      setFfdA(restored.ffdA)
+      setFfdB(restored.ffdB)
+      setFfdSettingsA(restored.ffdSettingsA)
+      setFfdSettingsB(restored.ffdSettingsB)
+      setShoeFile(restored.shoeFileName)
+      setLastFile(restored.lastFileName)
+      setCurrentStep(restored.currentStep)
+      setMaxReachedStep(restored.currentStep)
+
+      toast({ title: 'State loaded', type: 'success' })
+    } catch (err) {
+      console.error('Load state failed:', err)
+      toast({ title: 'Failed to load state', type: 'error' })
+    }
+  }, [userId, toast, clearUndo])
+
+  const handleDeleteState = useCallback(async (stateId: string) => {
+    try {
+      await deleteSavedState(userId, stateId)
+      setSavedStatesRefreshTrigger((n) => n + 1)
+      toast({ title: 'State deleted', type: 'success' })
+    } catch (err) {
+      console.error('Delete state failed:', err)
+      toast({ title: 'Failed to delete state', type: 'error' })
+    }
+  }, [userId, toast])
+
   // ─── Export ────────────────────────────────────────────────────────────────
 
   const handleExportGLB = useCallback(() => {
@@ -672,8 +810,9 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
       if (axis === 'z') mesh.scale.z *= -1
       mesh.updateMatrix()
       if (ffd) ffd.updateTransform(mesh.matrix)
+      invalidateHeatmap()
     },
-    [activeObject, shoeMesh, lastMesh, ffdA, ffdB, pushSnapshot, captureSnapshot],
+    [activeObject, shoeMesh, lastMesh, ffdA, ffdB, pushSnapshot, captureSnapshot, invalidateHeatmap],
   )
 
   const handleRotate90 = useCallback(
@@ -689,8 +828,9 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
       if (axis === 'z') mesh.rotation.z += angle
       mesh.updateMatrix()
       if (ffd) ffd.updateTransform(mesh.matrix)
+      invalidateHeatmap()
     },
-    [activeObject, shoeMesh, lastMesh, ffdA, ffdB, pushSnapshot, captureSnapshot],
+    [activeObject, shoeMesh, lastMesh, ffdA, ffdB, pushSnapshot, captureSnapshot, invalidateHeatmap],
   )
 
   // ─── FFD Settings ──────────────────────────────────────────────────────────
@@ -755,7 +895,8 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
       lastMesh.geometry.dispose()
       lastMesh.geometry = reset
     }
-  }, [activeObject, ffdA, ffdB, shoeMesh, lastMesh, pushSnapshot, captureSnapshot])
+    invalidateHeatmap()
+  }, [activeObject, ffdA, ffdB, shoeMesh, lastMesh, pushSnapshot, captureSnapshot, invalidateHeatmap])
 
   // ─── Start new project ─────────────────────────────────────────────────────
 
@@ -777,6 +918,8 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
     setIsLastHidden(false)
     setIsResultWireframe(false)
     setRawResultGeometry(null)
+    setIsThicknessHeatmapActive(false)
+    setThicknessColors(null)
     toolGeometryRef.current = null
     setIsSmoothing(false)
     setSmoothRadius(0.5)
@@ -785,6 +928,36 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
     setMaxReachedStep(0)
     clearUndo()
   }, [clearUndo])
+
+  // ─── Thickness heatmap ─────────────────────────────────────────────────────
+
+  const handleToggleHeatmap = useCallback(async () => {
+    if (isThicknessHeatmapActive) {
+      setIsThicknessHeatmapActive(false)
+      return
+    }
+    if (!shoeMesh || !lastMesh) return
+
+    // Use cached colors if still valid (not invalidated by a mesh change)
+    if (thicknessColors) {
+      setIsThicknessHeatmapActive(true)
+      return
+    }
+
+    // Compute fresh
+    setIsComputingHeatmap(true)
+    await new Promise<void>((r) => setTimeout(r, 50)) // yield for spinner
+    try {
+      const colors = computeThicknessColors(shoeMesh, lastMesh, sceneUnitToMM)
+      setThicknessColors(colors)
+      setIsThicknessHeatmapActive(true)
+    } catch (err) {
+      console.error('Heatmap computation failed:', err)
+      toast({ title: 'Heatmap computation failed', type: 'error' })
+    } finally {
+      setIsComputingHeatmap(false)
+    }
+  }, [isThicknessHeatmapActive, shoeMesh, lastMesh, thicknessColors, sceneUnitToMM, toast])
 
   // ─── Step navigation ───────────────────────────────────────────────────────
 
@@ -808,6 +981,8 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
   const handleDragStartB = useCallback(() => {
     pushRef.current(captureRef.current())
   }, [])
+  const handleDragEndA = useCallback(() => { invalidateHeatmap() }, [invalidateHeatmap])
+  const handleDragEndB = useCallback(() => { invalidateHeatmap() }, [invalidateHeatmap])
   const handleFFDDragStartA = useCallback(() => {
     pushRef.current(captureRef.current())
   }, [])
@@ -997,11 +1172,15 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
         onFFDPointMoveB={handleFFDPointMoveB}
         onDragStartA={handleDragStartA}
         onDragStartB={handleDragStartB}
+        onDragEndA={handleDragEndA}
+        onDragEndB={handleDragEndB}
         onFFDDragStartA={handleFFDDragStartA}
         onFFDDragStartB={handleFFDDragStartB}
         cameraViewRef={cameraViewRef}
         orbitControlsRef={orbitControlsRef}
         resetCameraTrigger={resetCameraTrigger}
+        isThicknessHeatmapActive={isThicknessHeatmapActive}
+        thicknessColors={thicknessColors}
       />
 
       {/* Floating Toolbar — centered bottom */}
@@ -1035,7 +1214,20 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
         onRedo={handleRedo}
         gallerySidebarOpen={gallerySidebarOpen}
         onToggleGallerySidebar={() => setGallerySidebarOpen((p) => !p)}
+        savedStatesSidebarOpen={savedStatesSidebarOpen}
+        onToggleSavedStatesSidebar={() => {
+          if (requirePro('Saved States')) setSavedStatesSidebarOpen((p) => !p)
+        }}
+        onSaveState={() => {
+          if (requirePro('Save State')) setSaveNameModalOpen(true)
+        }}
+        isSavingState={isSavingState}
         showActiveObjectControls={currentStep === 3}
+        isPro={isPro}
+        isThicknessHeatmapActive={isThicknessHeatmapActive}
+        onToggleHeatmap={handleToggleHeatmap}
+        isComputingHeatmap={isComputingHeatmap}
+        canShowHeatmap={!!shoeMesh && !!lastMesh && currentStep === 3}
       />
 
       {/* Slide-in Sidebar — left side */}
@@ -1049,6 +1241,10 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
         canGoPrev={canGoPrev}
         credits={credits}
         onOpenGallery={() => setGallerySidebarOpen(true)}
+        onOpenSavedStates={() => {
+          if (requirePro('Saved States')) setSavedStatesSidebarOpen(true)
+        }}
+        isPro={isPro}
       >
         {renderPanel()}
       </Sidebar>
@@ -1084,6 +1280,34 @@ function FootwearMaker({ userId }: FootwearMakerProps) {
         onClose={() => setGallerySidebarOpen(false)}
         userId={userId}
         refreshTrigger={galleryRefreshTrigger}
+      />
+
+      {/* Saved States Sidebar — right side */}
+      <SavedStatesSidebar
+        open={savedStatesSidebarOpen}
+        onClose={() => setSavedStatesSidebarOpen(false)}
+        userId={userId}
+        refreshTrigger={savedStatesRefreshTrigger}
+        onLoad={handleLoadState}
+        onDelete={handleDeleteState}
+      />
+
+      {/* Save State Name Modal */}
+      <SaveNameModal
+        open={saveNameModalOpen}
+        onClose={() => setSaveNameModalOpen(false)}
+        isSaving={isSavingState}
+        onConfirm={async (name) => {
+          setSaveNameModalOpen(false)
+          await handleSaveState(name)
+        }}
+      />
+
+      {/* Pro Feature Modal */}
+      <ProFeatureModal
+        open={proModalOpen}
+        onClose={() => setProModalOpen(false)}
+        featureName={proModalFeature}
       />
 
       {/* Toast Notifications */}

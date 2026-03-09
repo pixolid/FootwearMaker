@@ -1,4 +1,5 @@
 import { useRef, useEffect, useMemo, Suspense } from 'react'
+import { ThicknessLegend } from '@/components/ui/ThicknessLegend'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -37,11 +38,15 @@ interface ViewportProps {
   onFFDPointMoveB: (i: number, j: number, k: number, position: THREE.Vector3) => void
   onDragStartA?: () => void
   onDragStartB?: () => void
+  onDragEndA?: () => void
+  onDragEndB?: () => void
   onFFDDragStartA?: () => void
   onFFDDragStartB?: () => void
   cameraViewRef: React.MutableRefObject<CameraView>
   orbitControlsRef: React.MutableRefObject<any>
   resetCameraTrigger: number
+  isThicknessHeatmapActive: boolean
+  thicknessColors: Float32Array | null
 }
 
 // ── Cursor controller ─────────────────────────────────────────────────────────
@@ -284,11 +289,15 @@ export function Viewport({
   onFFDPointMoveB,
   onDragStartA,
   onDragStartB,
+  onDragEndA,
+  onDragEndB,
   onFFDDragStartA,
   onFFDDragStartB,
   cameraViewRef,
   orbitControlsRef,
   resetCameraTrigger,
+  isThicknessHeatmapActive,
+  thicknessColors,
 }: ViewportProps) {
   // ── Imperative materials ────────────────────────────────────────────────
   const shoeMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
@@ -320,7 +329,26 @@ export function Viewport({
   useEffect(() => () => { shoeMaterial.dispose() }, [shoeMaterial])
   useEffect(() => () => { resultMaterial.dispose() }, [resultMaterial])
 
+  // Apply or remove per-vertex thickness heatmap colors on the shoe geometry.
+  // vertexColors=true triggers a shader recompile (needsUpdate), so we only
+  // toggle it when the heatmap state actually changes.
+  useEffect(() => {
+    if (!shoeMesh) return
+    if (isThicknessHeatmapActive && thicknessColors) {
+      shoeMesh.geometry.setAttribute('color', new THREE.BufferAttribute(thicknessColors, 3))
+      shoeMaterial.vertexColors = true
+      shoeMaterial.needsUpdate = true
+    } else {
+      if (shoeMesh.geometry.hasAttribute('color')) {
+        shoeMesh.geometry.deleteAttribute('color')
+      }
+      shoeMaterial.vertexColors = false
+      shoeMaterial.needsUpdate = true
+    }
+  }, [shoeMesh, isThicknessHeatmapActive, thicknessColors, shoeMaterial])
+
   return (
+    <div className="w-full h-full relative">
     <Canvas
       camera={{ position: [-3, 2.5, -4], fov: 50, near: 0.01, far: 1000 }}
       gl={{
@@ -376,6 +404,7 @@ export function Viewport({
               enabled={true}
               onTransform={onTransformA}
               onDragStart={onDragStartA}
+              onDragEnd={onDragEndA}
               space="world"
               size={1}
               orbitControlsRef={orbitControlsRef}
@@ -424,6 +453,7 @@ export function Viewport({
               enabled={true}
               onTransform={onTransformB}
               onDragStart={onDragStartB}
+              onDragEnd={onDragEndB}
               space="world"
               size={1}
               orbitControlsRef={orbitControlsRef}
@@ -453,5 +483,7 @@ export function Viewport({
         </>
       )}
     </Canvas>
+    {isThicknessHeatmapActive && <ThicknessLegend />}
+    </div>
   )
 }
